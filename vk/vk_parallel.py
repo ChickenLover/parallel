@@ -85,11 +85,12 @@ for i, ip in enumerate(ips):
             break
         args = [api, *script_args]
         print('*MASTER*: Opened script with args ', ' '.join(script_args), ' on ip ', ip)
-        log = open(f"logs/{ip}_{j}.log", 'w', bufferring=0)
+        log = open(f"logs/{ip}_{j}.log", 'w')
         logs.append(log)
         process = Process(target=thread_wrapper, args=(args, log, script.main), daemon=True)
         process.start()
         procs.append(process)
+        time.sleep(THREADS_DELAY)
 
 try:
     while procs:
