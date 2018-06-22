@@ -13,15 +13,17 @@ from db import initialize_mongo
 
 bots_per_ip = 3
 use_ips = 5
-SCOPE = 'video'
+
 ips = ['92.63.74.' + str(ip) for ip in range(135, 135 + use_ips)]
 PROJ_NAME = 'fsb'
-SCRIPT_NAME = 'load_videos_to_db'
+SCRIPT_NAME = 'get_groups_data'
 THREADS_DELAY = 2
-CUR_VER = "5.69"
 USE_SPLIT = True
 if USE_SPLIT:
-    input_file_name = f'ids.txt'
+    input_file_name = f'groups.csv'
+
+SCOPE = ''
+CUR_VER = "5.69"
 
 
 def gen_session(ip):
@@ -97,12 +99,11 @@ try:
         time.sleep(15)
         for proc, log in zip(procs, logs):
             log.flush()
-            if not proc.is_alive:
+            if proc.exitcode is not None:
                 print(proc.exitcode)
                 log.close()
                 logs.remove(log)
                 procs.remove(proc)
-                
 except KeyboardInterrupt:
     pass
 
