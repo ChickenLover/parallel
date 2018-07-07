@@ -9,18 +9,19 @@ import requests
 from requests_toolbelt.adapters import source
 
 from vk_api8 import VKApi, AuthException
-from db import initialize_mongo
+from db import get_authorized_connection
 
-bots_per_ip = 3
+bots_per_ip = 4
 use_ips = 5
 
 ips = ['92.63.74.' + str(ip) for ip in range(135, 135 + use_ips)]
-PROJ_NAME = 'fsb'
-SCRIPT_NAME = 'get_groups_data'
+bots_col = 'parallel_B'
+PROJ_NAME = 'hackaton'
+SCRIPT_NAME = 'get_posts_data'
 THREADS_DELAY = 2
 USE_SPLIT = True
 if USE_SPLIT:
-    input_file_name = f'groups.csv'
+    input_file_name = 'enrolled.csv'
 
 SCOPE = ''
 CUR_VER = "5.69"
@@ -39,14 +40,15 @@ def thread_wrapper(args, logfile, func):
     sys.stderr = logfile
     func(*args)
 
-
-bots = itertools.cycle(list((initialize_mongo('data', 'data_bots').find({'status':0}))))
+mongo_connect = get_authorized_connection()
+bots = mongo_connect['data'][bots_col].find({'status':0})
 clients_cycle = itertools.cycle([client["id"] for client in\
-                                                  initialize_mongo("spam", "clients").find()])
+                                                  mongo_connect["spam"]["clients"].find()])
 script = importlib.import_module("." + SCRIPT_NAME, package=PROJ_NAME)
 os.chdir(PROJ_NAME)
 
 apis = list()
+
 for bot in bots:
     if len(apis) == use_ips * bots_per_ip: break
     try:
@@ -54,7 +56,11 @@ for bot in bots:
                           version=CUR_VER, scope=SCOPE))
     except AuthException as e:
         print(e)
+        mongo_connect['data'][bots_col].update({'login': bot['login']}, {"$set": {"status": 5}})
         continue
+mongo_connect.close()
+
+
 if len(apis) < bots_per_ip*use_ips:
     print('NOT ENOUGH BOTS TO RUN WITH THOSE PARAMS')
     exit(1)
@@ -70,8 +76,7 @@ if USE_SPLIT:
     ARGS_ITERS = [iter(range(0, full_length, per_thread)),
                   iter(range(per_thread, full_length, per_thread))]
 else:
-    ARGS_ITERS = [iter(range(0, 5550, 917)), iter(range(917, 5550, 917))]
-
+    ARGS_ITERS = [iter(range(0, 462000001, 33000000)), iter(range(33000000, 495000001, 33000000))]
 
 procs = list()
 logs = list()
@@ -82,11 +87,13 @@ for i, ip in enumerate(ips):
         api = next(apis)
         api.session = gen_session(ip)
         try:
-            script_args = [str(next(arg_iter)) for arg_iter in ARGS_ITERS]
+            script_args = [next(arg_iter) for arg_iter in ARGS_ITERS]
         except StopIteration:
             break
         args = [api, *script_args]
-        print('*MASTER*: Opened script with args ', ' '.join(script_args), ' on ip ', ip)
+        print('*MASTER*: Opened script with args ',\
+                ' '.join([str(arg) for arg in script_args]),\
+                ' on ip ', ip)
         log = open(f"logs/{ip}_{j}.log", 'w')
         logs.append(log)
         process = Process(target=thread_wrapper, args=(args, log, script.main), daemon=True)
