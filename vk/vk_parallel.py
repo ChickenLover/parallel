@@ -15,15 +15,15 @@ bots_per_ip = 4
 use_ips = 5
 
 ips = ['92.63.74.' + str(ip) for ip in range(135, 135 + use_ips)]
-bots_col = 'parallel_B'
-PROJ_NAME = 'hackaton'
-SCRIPT_NAME = 'get_posts_data'
+bots_col = 'parallel_D'
+PROJ_NAME = 'get_vk'
+SCRIPT_NAME = 'get_friends'
 THREADS_DELAY = 2
 USE_SPLIT = True
 if USE_SPLIT:
-    input_file_name = 'enrolled.csv'
+    input_file_name = 'out.csv'
 
-SCOPE = ''
+SCOPE = 'friends'
 CUR_VER = "5.69"
 
 

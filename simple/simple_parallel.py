@@ -9,11 +9,11 @@ import requests
 from requests_toolbelt.adapters import source
 
 
-use_ips = 2
+use_ips = 5
 threads_per_ip = 3
 
 ips = ['92.63.74.' + str(ip) for ip in range(135, 135 + use_ips)]
-PROJ_NAME = "views"
+PROJ_NAME = "ctf"
 SCRIPT_NAME = f'countviews'
 THREADS_DELAY = 5
 
